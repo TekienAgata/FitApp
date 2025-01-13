@@ -1,23 +1,27 @@
 from flask import Flask, jsonify
-from db_setup import session
+from flask_sqlalchemy import SQLAlchemy
 from models import Exercise
-import psycopg2
-import os
+from os import environ
 
 
 app = Flask(__name__)
+DATABASE_URL = f"postgresql+psycopg2://{environ.get('POSTGRES_USER')}:{environ.get('POSTGRES_PASSWORD')}@{environ.get('POSTGRES_HOST')}:{environ.get('POSTGRES_PORT')}/{environ.get('POSTGRES_DB')}"
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+dbapp = SQLAlchemy(app)
+with app.app_context():
+    dbapp.create_all()
 
 
 @app.route("/")
-def hello_world():  # put application's code here
+def hello_world():
     return "Hello World!"
 
 
-@app.route("/exercises")
+"""@app.route("/exercises")
 def get_exercises():
     session.close()
     exercises = session.query(Exercise).all()
-    return jsonify(exercises)
+    return jsonify(exercises)"""
 
 
 if __name__ == "__main__":
