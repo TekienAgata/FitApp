@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, make_response, request
-from models import db, Exercise,User, Workout
 from os import environ
 
+from flask import Flask, jsonify, make_response, request
+
+from models import Exercise, User, Workout, db
 
 app = Flask(__name__)
 DATABASE_URL = (
@@ -77,7 +78,7 @@ def modify_exercise(id):
                 )
         return make_response(jsonify({"message": "exercise not found"}), 404)
     except Exception as e:
-        make_response(
+        return make_response(
             jsonify({"message": f"error modifying exercise {id}", "error": str(e)}), 500
         )
 
@@ -115,16 +116,14 @@ def create_exercise():
 
 
 @app.route("/users/<int:id>", methods=["PUT", "DELETE"])
-def modify_exercise(id):
+def modify_user(id):
     try:
         user = User.query.get(id)
         if user:
             if request.method == "DELETE":
                 db.session.delete(user)
                 db.session.commit()
-                return make_response(
-                    jsonify({"message": f"user {id} deleted"}), 200
-                )
+                return make_response(jsonify({"message": f"user {id} deleted"}), 200)
             if request.method == "PUT":
                 data = request.get_json()
                 if "name" in data:
@@ -134,14 +133,13 @@ def modify_exercise(id):
                 if "category" in data:
                     user.category = data["category"]
                 db.session.commit()
-                return make_response(
-                    jsonify({"message": f"user {id} updated"}), 200
-                )
+                return make_response(jsonify({"message": f"user {id} updated"}), 200)
         return make_response(jsonify({"message": "user not found"}), 404)
     except Exception as e:
-        make_response(
+        return make_response(
             jsonify({"message": f"error modifying user {id}", "error": str(e)}), 500
         )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
