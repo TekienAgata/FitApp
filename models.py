@@ -2,25 +2,11 @@ from datetime import datetime
 from uuid import uuid4
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 
 # Initializing the database's ORM
 db = SQLAlchemy()
-
-# Many-to-many relationship table between workout and exercise
-workout_exercise = db.Table(
-    "workout_exercise",
-    db.Column(
-        "workout_id", UUID(as_uuid=True), db.ForeignKey("workouts.id"), primary_key=True
-    ),
-    db.Column(
-        "exercise_id",
-        UUID(as_uuid=True),
-        db.ForeignKey("exercises.id"),
-        primary_key=True,
-    ),
-)
-
 
 class Exercise(db.Model):
     __tablename__ = "exercises"
@@ -28,10 +14,10 @@ class Exercise(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
     category = db.Column(db.String(100), nullable=False)
-    # custom_made = db.Column(db.Boolean, default=False, nullable=False)
-    # workouts = db.relationship("Workout", backref="exercise")
+    custom_made = db.Column(db.Boolean, default=False, nullable=False)
+    created_by = db.Column(UUID(as_uuid=True),db.ForeignKey("users.id"), default=None)
 
-    def json(self):
+    def make_json(self):
         return {
             "id": str(self.id),
             "name": self.name,
@@ -46,9 +32,10 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False, unique=True)
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(50), nullable=False, unique=True)
-    workouts = db.relationship("Workout", backref="user")
+    created_at = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    workouts = db.relationship("Workout", back_populates="user")
 
-    def json(self):
+    def make_json(self):
         return {
             "id": str(self.id),
             "username": self.username,
@@ -60,17 +47,14 @@ class User(db.Model):
 class Workout(db.Model):
     __tablename__ = "workouts"
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    date = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     user_workout_id = db.Column(
         UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=False
     )
-    comments = db.Column(db.Text)
+    user = db.relationship("User", back_populates="workouts")
 
-    exercises = db.relationship(
-        "Exercise", secondary=workout_exercise, backref="workouts"
-    )
 
-    def json(self):
+    def make_json(self):
         return {
             "id": str(self.id),
             "date": self.date.isoformat(),
@@ -78,3 +62,16 @@ class Workout(db.Model):
             "exercises": [exercise.json() for exercise in self.exercises],
             "comments": self.comments or "",
         }
+
+class WorkoutExercise(db.Model):
+    __tablename__ = "workout_exercises"
+    id = db.Column(UUID(as_uuid=True), primary_key = True, default=uuid4)
+    workout_id = db.Column(UUID(as_uuid=True), db.ForeignKey("workouts.id"),nullable=False)
+    exercise_id =db.Column(UUID(as_uuid=True),db.ForeignKey("exercises.id"),nullable=False)
+    sets = db.Column(db.Integer, nullable=False)
+    repetitions = db.Column(db.Integer)
+    weights = db.Column(db.Float)
+    duration = db.Column(db.Float)
+
+    def make_json(self):
+        return
