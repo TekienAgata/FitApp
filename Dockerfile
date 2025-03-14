@@ -11,15 +11,17 @@ RUN apt-get update && apt-get install -y curl build-essential libpq-dev && apt-g
 RUN curl -sSL https://install.python-poetry.org | python3 - --yes
 ENV PATH="/root/.local/bin:$PATH"
 
-# Copy dependency files and install dependencies
-COPY pyproject.toml poetry.lock /FitApp/
+# Copy only dependency files first
+COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false && poetry install --no-root --no-interaction
 
-# Copy the rest of the application code
-COPY . /FitApp
+# We don't need to copy the application code here anymore since we'll use volumes
+# The code will be mounted at runtime
 
 EXPOSE 5000
 
 ENV FLASK_APP=app.py
+ENV FLASK_DEBUG=1
+ENV FLASK_ENV=development
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["flask", "run", "--host=0.0.0.0", "--debug"]

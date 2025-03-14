@@ -24,15 +24,18 @@ services:
     ports:
       - "5000:5000"
     environment:
+      FLASK_DEBUG: 1
+      FLASK_ENV: development
       POSTGRES_DB: fitapp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+    volumes:
+      - .:/FitApp
     depends_on:
       db:
         condition: service_healthy
-    command: ["sh", "-c", "flask run --host=0.0.0.0"]
-
+    command: ["flask", "run", "--host=0.0.0.0", "--debug"]
 volumes:
   postgres_data:
